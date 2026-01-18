@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Local FPS Counter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FPS Widget</title>
   <style>
     :root {
       --bg: #05060a;
@@ -23,118 +24,114 @@
       padding: 0;
     }
 
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
       background: radial-gradient(circle at top, #151827 0, #05060a 55%);
       color: var(--text-main);
       font-family: var(--font-main);
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      padding: 16px;
     }
 
     .card {
       background: linear-gradient(145deg, #0b0d14, #101321);
-      border-radius: 18px;
-      padding: 18px 20px;
+      border-radius: 2.5vh;
+      padding: 3vh 3vw;
       box-shadow:
-        0 18px 40px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(255, 255, 255, 0.02);
-      min-width: 260px;
-      max-width: 360px;
+        0 2vh 4vh rgba(0, 0, 0, 0.7),
+        0 0 0 0.1vh rgba(255, 255, 255, 0.02);
+      width: 95%;
+      height: 95%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .header {
+    .header, .sub-row, .footer {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      align-items: center;
+      font-size: 1.5vh;
     }
 
     .title {
-      font-size: 14px;
+      font-size: 1.6vh;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-dim);
     }
 
     .status-pill {
-      font-size: 11px;
-      padding: 3px 8px;
+      font-size: 1.3vh;
+      padding: 0.5vh 1vh;
       border-radius: 999px;
-      background: rgba(79, 209, 197, 0.12);
+      background: var(--accent-soft);
       color: var(--accent);
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 0.5vh;
     }
 
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 0.8vh;
+      height: 0.8vh;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 8px rgba(79, 209, 197, 0.9);
+      box-shadow: 0 0 1vh rgba(79, 209, 197, 0.9);
     }
 
     .fps-row {
       display: flex;
       align-items: baseline;
-      gap: 10px;
-      margin-bottom: 8px;
+      gap: 1vh;
+      margin: 2vh 0;
     }
 
     .fps-value {
-      font-size: 40px;
+      font-size: 8vh;
       font-weight: 700;
       letter-spacing: 0.03em;
     }
 
     .fps-label {
-      font-size: 12px;
+      font-size: 2vh;
       text-transform: uppercase;
       color: var(--text-dim);
       letter-spacing: 0.16em;
     }
 
-    .sub-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
     .metric-group {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 0.5vh;
     }
 
     .metric-label {
-      font-size: 11px;
+      font-size: 1.3vh;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--text-dim);
     }
 
     .metric-value {
-      font-size: 13px;
+      font-size: 1.8vh;
       color: var(--text-main);
     }
 
     .metric-value span {
-      font-size: 11px;
+      font-size: 1.3vh;
       color: var(--text-dim);
-      margin-left: 4px;
+      margin-left: 0.5vh;
     }
 
     .bar-wrapper {
-      margin-top: 6px;
+      margin-top: 1vh;
       background: rgba(255, 255, 255, 0.04);
       border-radius: 999px;
       overflow: hidden;
-      height: 6px;
+      height: 1vh;
     }
 
     .bar-fill {
@@ -144,44 +141,26 @@
       transition: width 0.15s ease-out;
     }
 
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 8px;
-      font-size: 10px;
-      color: var(--text-dim);
-    }
-
     .hint {
       opacity: 0.8;
     }
 
     .dot-row {
       display: flex;
-      gap: 4px;
+      gap: 0.5vh;
       align-items: center;
     }
 
     .tiny-dot {
-      width: 4px;
-      height: 4px;
+      width: 0.6vh;
+      height: 0.6vh;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.12);
     }
 
     .tiny-dot.active {
       background: var(--accent);
-      box-shadow: 0 0 6px rgba(79, 209, 197, 0.9);
-    }
-
-    @media (max-width: 400px) {
-      .card {
-        padding: 14px 16px;
-      }
-      .fps-value {
-        font-size: 32px;
-      }
+      box-shadow: 0 0 0.8vh rgba(79, 209, 197, 0.9);
     }
   </style>
 </head>
@@ -232,7 +211,7 @@
 
     let lastTime = performance.now();
     let frameTimes = [];
-    const windowSeconds = 1.0; // averaging window
+    const windowSeconds = 1.0;
 
     function update() {
       const now = performance.now();
@@ -240,7 +219,6 @@
       lastTime = now;
 
       frameTimes.push(delta);
-
       const cutoff = now - windowSeconds * 1000;
       let accTime = 0;
       let filtered = [];
@@ -259,7 +237,6 @@
       }
 
       const fps = avgFrameTime > 0 ? 1000 / avgFrameTime : 0;
-
       fpsValueEl.textContent = fps.toFixed(0);
       frameTimeValueEl.innerHTML = avgFrameTime.toFixed(2) + "<span>ms</span>";
 
