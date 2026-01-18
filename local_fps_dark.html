@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Local FPS Counter</title>
+  <style>
+    :root {
+      --bg: #05060a;
+      --card: #0f1118;
+      --accent: #4fd1c5;
+      --accent-soft: rgba(79, 209, 197, 0.2);
+      --text-main: #f5f5f7;
+      --text-dim: #8b8fa3;
+      --danger: #f56565;
+      --warn: #ecc94b;
+      --ok: #48bb78;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #151827 0, #05060a 55%);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 16px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #0b0d14, #101321);
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.02);
+      min-width: 260px;
+      max-width: 360px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .status-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(79, 209, 197, 0.12);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(79, 209, 197, 0.9);
+    }
+
+    .fps-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .fps-value {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .fps-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.16em;
+    }
+
+    .sub-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .metric-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+    }
+
+    .metric-value {
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    .metric-value span {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: 4px;
+    }
+
+    .bar-wrapper {
+      margin-top: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 999px;
+      overflow: hidden;
+      height: 6px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #48bb78, #ecc94b, #f56565);
+      transition: width 0.15s ease-out;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .hint {
+      opacity: 0.8;
+    }
+
+    .dot-row {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .tiny-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .tiny-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 6px rgba(79, 209, 197, 0.9);
+    }
+
+    @media (max-width: 400px) {
+      .card {
+        padding: 14px 16px;
+      }
+      .fps-value {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title">Frame Monitor</div>
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        Live
+      </div>
+    </div>
+
+    <div class="fps-row">
+      <div id="fpsValue" class="fps-value">0</div>
+      <div class="fps-label">FPS</div>
+    </div>
+
+    <div class="sub-row">
+      <div class="metric-group">
+        <div class="metric-label">Frame time</div>
+        <div class="metric-value" id="frameTimeValue">0.00<span>ms</span></div>
+      </div>
+      <div class="metric-group">
+        <div class="metric-label">Averaging</div>
+        <div class="metric-value" id="avgWindowValue">1<span>s window</span></div>
+      </div>
+    </div>
+
+    <div class="bar-wrapper">
+      <div id="fpsBar" class="bar-fill"></div>
+    </div>
+
+    <div class="footer">
+      <div class="hint">Uses requestAnimationFrame — keep this visible while gaming.</div>
+      <div class="dot-row">
+        <div class="tiny-dot active"></div>
+        <div class="tiny-dot"></div>
+        <div class="tiny-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fpsValueEl = document.getElementById("fpsValue");
+    const frameTimeValueEl = document.getElementById("frameTimeValue");
+    const fpsBarEl = document.getElementById("fpsBar");
+
+    let lastTime = performance.now();
+    let frameTimes = [];
+    const windowSeconds = 1.0; // averaging window
+
+    function update() {
+      const now = performance.now();
+      const delta = now - lastTime;
+      lastTime = now;
+
+      frameTimes.push(delta);
+
+      const cutoff = now - windowSeconds * 1000;
+      let accTime = 0;
+      let filtered = [];
+
+      for (let i = frameTimes.length - 1; i >= 0; i--) {
+        accTime += frameTimes[i];
+        if (accTime > windowSeconds * 1000) break;
+        filtered.unshift(frameTimes[i]);
+      }
+      frameTimes = filtered;
+
+      let avgFrameTime = 0;
+      if (frameTimes.length > 0) {
+        const sum = frameTimes.reduce((a, b) => a + b, 0);
+        avgFrameTime = sum / frameTimes.length;
+      }
+
+      const fps = avgFrameTime > 0 ? 1000 / avgFrameTime : 0;
+
+      fpsValueEl.textContent = fps.toFixed(0);
+      frameTimeValueEl.innerHTML = avgFrameTime.toFixed(2) + "<span>ms</span>";
+
+      const clampedFps = Math.max(0, Math.min(240, fps));
+      const percent = (clampedFps / 240) * 100;
+      fpsBarEl.style.width = percent + "%";
+
+      requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>
