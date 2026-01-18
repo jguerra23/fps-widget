@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FPS Widget</title>
+  <style>
+    :root {
+      --bg: #05060a;
+      --card: #0f1118;
+      --accent: #4fd1c5;
+      --accent-soft: rgba(79, 209, 197, 0.2);
+      --text-main: #f5f5f7;
+      --text-dim: #8b8fa3;
+      --danger: #f56565;
+      --warn: #ecc94b;
+      --ok: #48bb78;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #151827 0, #05060a 55%);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #0b0d14, #101321);
+      border-radius: 2.5vh;
+      padding: 3vh 3vw;
+      box-shadow:
+        0 2vh 4vh rgba(0, 0, 0, 0.7),
+        0 0 0 0.1vh rgba(255, 255, 255, 0.02);
+      width: 95%;
+      height: 95%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .header, .sub-row, .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.8vh;
+    }
+
+    .title {
+      font-size: 2vh;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .status-pill {
+      font-size: 1.8vh;
+      padding: 0.6vh 1.2vh;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5vh;
+    }
+
+    .status-dot {
+      width: 0.8vh;
+      height: 0.8vh;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 1vh rgba(79, 209, 197, 0.9);
+    }
+
+    .fps-row {
+      display: flex;
+      align-items: baseline;
+      gap: 1vh;
+      margin: 2vh 0;
+    }
+
+    /* 4× Bigger FPS Fonts */
+    .fps-value {
+      font-size: 48vh; /* was 12vh */
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .fps-label {
+      font-size: 12vh; /* was 3vh */
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.16em;
+    }
+
+    .metric-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5vh;
+    }
+
+    .metric-label {
+      font-size: 1.8vh;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+    }
+
+    .metric-value {
+      font-size: 2.4vh;
+      color: var(--text-main);
+    }
+
+    .metric-value span {
+      font-size: 1.8vh;
+      color: var(--text-dim);
+      margin-left: 0.5vh;
+    }
+
+    .bar-wrapper {
+      margin-top: 1vh;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 999px;
+      overflow: hidden;
+      height: 1vh;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #48bb78, #ecc94b, #f56565);
+      transition: width 0.15s ease-out;
+    }
+
+    .hint {
+      opacity: 0.8;
+    }
+
+    .dot-row {
+      display: flex;
+      gap: 0.5vh;
+      align-items: center;
+    }
+
+    .tiny-dot {
+      width: 0.6vh;
+      height: 0.6vh;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .tiny-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 0.8vh rgba(79, 209, 197, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title">Frame Monitor</div>
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        Live
+      </div>
+    </div>
+
+    <div class="fps-row">
+      <div id="fpsValue" class="fps-value">0</div>
+      <div class="fps-label">FPS</div>
+    </div>
+
+    <div class="sub-row">
+      <div class="metric-group">
+        <div class="metric-label">Frame time</div>
+        <div class="metric-value" id="frameTimeValue">0.00<span>ms</span></div>
+      </div>
+      <div class="metric-group">
+        <div class="metric-label">Averaging</div>
+        <div class="metric-value" id="avgWindowValue">1<span>s window</span></div>
+      </div>
+    </div>
+
+    <div class="bar-wrapper">
+      <div id="fpsBar" class="bar-fill"></div>
+    </div>
+
+    <div class="footer">
+      <div class="hint">Uses requestAnimationFrame — keep this visible while gaming.</div>
+      <div class="dot-row">
+        <div class="tiny-dot active"></div>
+        <div class="tiny-dot"></div>
+        <div class="tiny-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fpsValueEl = document.getElementById("fpsValue");
+    const frameTimeValueEl = document.getElementById("frameTimeValue");
+    const fpsBarEl = document.getElementById("fpsBar");
+
+    let lastTime = performance.now();
+    let frameTimes = [];
+    const windowSeconds = 1.0;
+
+    function update() {
+      const now = performance.now();
+      const delta = now - lastTime;
+      lastTime = now;
+
+      frameTimes.push(delta);
+      const cutoff = now - windowSeconds * 1000;
+      let accTime = 0;
+      let filtered = [];
+
+      for (let i = frameTimes.length - 1; i >= 0; i--) {
+        accTime += frameTimes[i];
+        if (accTime > windowSeconds * 1000) break;
+        filtered.unshift(frameTimes[i]);
+      }
+      frameTimes = filtered;
+
+      let avgFrameTime = 0;
+      if (frameTimes.length > 0) {
+        const sum = frameTimes.reduce((a, b) => a + b, 0);
+        avgFrameTime = sum / frameTimes.length;
+      }
+
+      const fps = avgFrameTime > 0 ? 1000 / avgFrameTime : 0;
+      fpsValueEl.textContent = fps.toFixed(0);
+      frameTimeValueEl.innerHTML = avgFrameTime.toFixed(2) + "<span>ms</span>";
+
+      const clampedFps = Math.max(0, Math.min(240, fps));
+      const percent = (clampedFps / 240) * 100;
+      fpsBarEl.style.width = percent + "%";
+
+      requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>
